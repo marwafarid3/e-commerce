@@ -21,13 +21,13 @@ if not os.path.exists(IMAGES_DIR):
 # ================================
 if not os.path.exists(PRODUCTS_FILE):
     df = pd.DataFrame([
-        {"name": "كمامة طبية", "price": 2.5, "img": f"{IMAGES_DIR}/mask.jpg", "desc": "كمامة واقية ثلاثية الطبقات."},
-        {"name": "قفازات طبية", "price": 5.0, "img": f"{IMAGES_DIR}/gloves.jpg", "desc": "قفازات لاتكس معقمة للاستعمال الواحد."},
-        {"name": "جهاز قياس ضغط الدم", "price": 350, "img": f"{IMAGES_DIR}/blood_pressure.jpg", "desc": "جهاز رقمي لقياس ضغط الدم بدقة."},
-        {"name": "ميزان حرارة إلكتروني", "price": 75, "img": f"{IMAGES_DIR}/thermometer.jpg", "desc": "ميزان حرارة رقمي سريع القراءة."},
-        {"name": "مطهر يدين", "price": 25, "img": f"{IMAGES_DIR}/sanitizer.jpg", "desc": "مطهر كحولي بنسبة 70%."},
-        {"name": "كرسي متحرك", "price": 1450, "img": f"{IMAGES_DIR}/wheelchair.jpg", "desc": "كرسي متين وخفيف الوزن قابل للطي."},
-    ])
+    {"name": "كمامة طبية", "price": 2.5, "img": "mask.jpg", "desc": "كمامة واقية ثلاثية الطبقات."},
+    {"name": "قفازات طبية", "price": 5.0, "img": "gloves.jpg", "desc": "قفازات لاتكس معقمة للاستعمال الواحد."},
+    {"name": "جهاز قياس ضغط الدم", "price": 350, "img": "blood_pressure.jpg", "desc": "جهاز رقمي لقياس ضغط الدم بدقة."},
+    {"name": "ميزان حرارة إلكتروني", "price": 75, "img": "thermometer.jpg", "desc": "ميزان حرارة رقمي سريع القراءة."},
+    {"name": "مطهر يدين", "price": 25, "img": "sanitizer.jpg", "desc": "مطهر كحولي بنسبة 70%."},
+    {"name": "كرسي متحرك", "price": 1450, "img": "wheelchair.jpg", "desc": "كرسي متين وخفيف الوزن قابل للطي."},
+])
     df.to_csv(PRODUCTS_FILE, index=False)
 
 if not os.path.exists(ORDERS_FILE):
@@ -292,3 +292,4 @@ elif page == "الطلبات (Admin)":
                     file_name="orders_export.csv",
                     mime="text/csv"
                 )
+
