@@ -12,22 +12,26 @@ PRODUCTS_FILE = "products.csv"
 ORDERS_FILE = "orders.csv"
 IMAGES_DIR = "product_images"
 
+# مجلد السكريبت الحالي
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # إنشاء مجلد الصور لو مش موجود
-if not os.path.exists(IMAGES_DIR):
-    os.makedirs(IMAGES_DIR)
+IMAGES_PATH = os.path.join(BASE_DIR, IMAGES_DIR)
+if not os.path.exists(IMAGES_PATH):
+    os.makedirs(IMAGES_PATH)
 
 # ================================
 # إنشاء ملفات البيانات لو مش موجودة
 # ================================
 if not os.path.exists(PRODUCTS_FILE):
     df = pd.DataFrame([
-    {"name": "كمامة طبية", "price": 2.5, "img": "mask.jpg", "desc": "كمامة واقية ثلاثية الطبقات."},
-    {"name": "قفازات طبية", "price": 5.0, "img": "gloves.jpg", "desc": "قفازات لاتكس معقمة للاستعمال الواحد."},
-    {"name": "جهاز قياس ضغط الدم", "price": 350, "img": "blood_pressure.jpg", "desc": "جهاز رقمي لقياس ضغط الدم بدقة."},
-    {"name": "ميزان حرارة إلكتروني", "price": 75, "img": "thermometer.jpg", "desc": "ميزان حرارة رقمي سريع القراءة."},
-    {"name": "مطهر يدين", "price": 25, "img": "sanitizer.jpg", "desc": "مطهر كحولي بنسبة 70%."},
-    {"name": "كرسي متحرك", "price": 1450, "img": "wheelchair.jpg", "desc": "كرسي متين وخفيف الوزن قابل للطي."},
-])
+        {"name": "كمامة طبية", "price": 2.5, "img": "mask.jpg", "desc": "كمامة واقية ثلاثية الطبقات."},
+        {"name": "قفازات طبية", "price": 5.0, "img": "gloves.jpg", "desc": "قفازات لاتكس معقمة للاستعمال الواحد."},
+        {"name": "جهاز قياس ضغط الدم", "price": 350, "img": "blood_pressure.jpg", "desc": "جهاز رقمي لقياس ضغط الدم بدقة."},
+        {"name": "ميزان حرارة إلكتروني", "price": 75, "img": "thermometer.jpg", "desc": "ميزان حرارة رقمي سريع القراءة."},
+        {"name": "مطهر يدين", "price": 25, "img": "sanitizer.jpg", "desc": "مطهر كحولي بنسبة 70%."},
+        {"name": "كرسي متحرك", "price": 1450, "img": "wheelchair.jpg", "desc": "كرسي متين وخفيف الوزن قابل للطي."},
+    ])
     df.to_csv(PRODUCTS_FILE, index=False)
 
 if not os.path.exists(ORDERS_FILE):
@@ -64,7 +68,6 @@ st.sidebar.subheader("🔐 تسجيل دخول الأدمن")
 if not st.session_state.is_admin:
     admin_user = st.sidebar.text_input("اسم المستخدم", key="admin_user")
     admin_pass = st.sidebar.text_input("كلمة المرور", type="password", key="admin_pass")
-    # تقدر تغيّرهم هنا
     CORRECT_USER = "admin"
     CORRECT_PASS = "1234"
 
@@ -94,9 +97,19 @@ if page == "المتجر":
 
         for i, row in products_df.iterrows():
             with cols[i % 3]:
-                # محاولة عرض الصورة
-                if isinstance(row["img"], str) and os.path.exists(row["img"]):
-                    st.image(row["img"], use_container_width=True)
+                # البحث عن الصورة في مجلد الصور أو جنب السكريبت
+                possible_paths = [
+                    os.path.join(IMAGES_PATH, row["img"]),
+                    os.path.join(BASE_DIR, row["img"])
+                ]
+                img_path = None
+                for p in possible_paths:
+                    if os.path.exists(p):
+                        img_path = p
+                        break
+
+                if img_path:
+                    st.image(img_path, use_container_width=True)
                 else:
                     st.write("🚫 لا توجد صورة")
 
@@ -149,7 +162,6 @@ elif page == "سلة المشتريات":
             ["Stripe (Visa/Master)", "Paymob (بطاقات/محافظ)", "الدفع عند الاستلام"]
         )
 
-        # شرح بسيط / Placeholder للـ Payment Gateway
         if payment_method == "Stripe (Visa/Master)":
             st.info("سيتم تحويلك لصفحة دفع Stripe (تحتاج إضافة رابط الـ Checkout بعد إعداد API).")
         elif payment_method == "Paymob (بطاقات/محافظ)":
@@ -161,13 +173,7 @@ elif page == "سلة المشتريات":
             if name == "" or phone == "":
                 st.error("❌ من فضلك أدخل بيانات العميل كاملة.")
             else:
-                # حالة الدفع
-                if payment_method == "الدفع عند الاستلام":
-                    payment_status = "COD - Pending"
-                else:
-                    # في الواقع هنا المفروض تستدعي API وترجع حالة الدفع
-                    payment_status = "Online - Pending (محاكاة)"
-
+                payment_status = "COD - Pending" if payment_method == "الدفع عند الاستلام" else "Online - Pending (محاكاة)"
                 orders_df = pd.read_csv(ORDERS_FILE)
                 order_id = len(orders_df) + 1
 
@@ -196,60 +202,48 @@ elif page == "لوحة التحكم (Admin)":
         st.error("هذه الصفحة متاحة للأدمن فقط ❌")
     else:
         st.subheader("🔧 إدارة المنتجات")
-
         tab1, tab2 = st.tabs(["➕ إضافة منتج", "🗂️ حذف/عرض المنتجات"])
 
-        # -------- إضافة منتج جديد --------
+        # إضافة منتج جديد
         with tab1:
             st.write("أدخل بيانات المنتج الجديد")
-
             n = st.text_input("اسم المنتج الجديد")
             p = st.number_input("السعر", min_value=1.0, step=1.0)
             d = st.text_area("الوصف")
-
-            st.write("📷 رفع صورة المنتج:")
             uploaded_file = st.file_uploader("اختر صورة", type=["jpg", "jpeg", "png"])
-
             img_path = ""
 
             if st.button("حفظ المنتج"):
                 if n == "" or p <= 0:
                     st.error("من فضلك أدخل اسم المنتج والسعر بشكل صحيح.")
                 else:
-                    # حفظ الصورة لو موجودة
-                    if uploaded_file is not None:
-                        img_filename = f"{IMAGES_DIR}/{uploaded_file.name}"
+                    if uploaded_file:
+                        img_filename = os.path.join(IMAGES_PATH, uploaded_file.name)
                         with open(img_filename, "wb") as f:
                             f.write(uploaded_file.getbuffer())
                         img_path = img_filename
-                    else:
-                        img_path = ""
 
                     new_row = pd.DataFrame([{
                         "name": n,
                         "price": p,
                         "desc": d,
-                        "img": img_path
+                        "img": uploaded_file.name if uploaded_file else ""
                     }])
 
                     df = pd.read_csv(PRODUCTS_FILE)
                     df = pd.concat([df, new_row], ignore_index=True)
                     df.to_csv(PRODUCTS_FILE, index=False)
-
                     st.success("✔ تم إضافة المنتج بنجاح!")
 
-        # -------- حذف وعرض المنتجات --------
+        # حذف وعرض المنتجات
         with tab2:
             df = pd.read_csv(PRODUCTS_FILE)
-
             if df.empty:
                 st.info("لا توجد منتجات لعرضها.")
             else:
                 st.write("📋 قائمة المنتجات الحالية:")
                 st.dataframe(df)
-
                 product_to_delete = st.selectbox("اختر المنتج لحذفه", df["name"])
-
                 if st.button("🗑 حذف المنتج المحدد"):
                     df = df[df["name"] != product_to_delete]
                     df.to_csv(PRODUCTS_FILE, index=False)
@@ -263,26 +257,18 @@ elif page == "الطلبات (Admin)":
         st.error("هذه الصفحة متاحة للأدمن فقط ❌")
     else:
         st.subheader("📦 جميع الطلبات")
-
         if not os.path.exists(ORDERS_FILE):
             st.info("لا توجد طلبات حتى الآن.")
         else:
             orders_df = pd.read_csv(ORDERS_FILE)
-
             if orders_df.empty:
                 st.info("لا توجد طلبات حتى الآن.")
             else:
-                # فلترة بسيطة
                 status_filter = st.selectbox(
                     "فلتر حسب حالة الدفع",
                     ["الكل", "COD - Pending", "Online - Pending (محاكاة)"]
                 )
-
-                if status_filter != "الكل":
-                    filtered = orders_df[orders_df["payment_status"] == status_filter]
-                else:
-                    filtered = orders_df
-
+                filtered = orders_df if status_filter == "الكل" else orders_df[orders_df["payment_status"] == status_filter]
                 st.write("📋 قائمة الطلبات:")
                 st.dataframe(filtered)
 
@@ -292,4 +278,3 @@ elif page == "الطلبات (Admin)":
                     file_name="orders_export.csv",
                     mime="text/csv"
                 )
-
